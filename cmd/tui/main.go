@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/plainlystated/gitworktree/internal/gitdata"
 	"github.com/plainlystated/gitworktree/internal/githubdata"
@@ -16,6 +17,39 @@ type app struct {
 }
 
 func main() {
+	if len(os.Args) == 1 {
+		tui()
+		os.Exit(0)
+	}
+
+	switch os.Args[1] {
+	case "add":
+		if len(os.Args) != 3 {
+			fmt.Println("Expected 1 arg: branch_name")
+			os.Exit(1)
+		}
+		CreateWorktree(os.Args[2])
+
+	case "co":
+		if len(os.Args) != 3 {
+			fmt.Println("Expected 1 arg: branch_name")
+			os.Exit(1)
+		}
+		CheckoutWorktree(os.Args[2])
+	case "list":
+		if len(os.Args) != 2 {
+			fmt.Println("Expected no args")
+			os.Exit(1)
+		}
+		ListWorktrees()
+
+	default:
+		fmt.Println("Expected one of: add, co, list")
+		os.Exit(1)
+	}
+}
+
+func tui() {
 	githubService, err := githubdata.NewService("lewiscountypress", "plainlystated", "workbench")
 	if err != nil {
 		log.Fatal(err.Error())

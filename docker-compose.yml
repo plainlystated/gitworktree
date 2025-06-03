@@ -1,0 +1,7 @@
+version: "3"
+services:
+  go:
+    image: golang:1
+    working_dir: /opt/gwt
+    volumes:
+      - .:/opt/gwt

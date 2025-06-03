@@ -1,0 +1,5 @@
+test githubdata(?)
+show branches that aren't clean (related to deleting)
+delete git test client; inject some test double for os/exec instead? -- or just use real git.. maybe in-memory
+
+sort by age, not name

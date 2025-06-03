@@ -16,7 +16,7 @@ $(BIN): $(GOFILES)
 	go build -ldflags "-X main.version=$(VERSION)" -o $(BIN) ./cmd/tui
 
 install: build
-	install -m 755 $(BIN) /usr/local/bin/$(APP_NAME)
+	install -m 755 $(BIN) $(HOME)/Sync/system_config/bin/
 
 clean:
 	rm -rf $(BUILD_DIR)

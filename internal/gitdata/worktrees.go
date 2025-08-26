@@ -11,3 +11,12 @@ type Worktree struct {
 	Bare      bool
 	UpdatedAt time.Time
 }
+
+func WorktreeByName(wts []Worktree, name string) (wt Worktree, found bool) {
+	for _, wt := range wts {
+		if wt.Name == name {
+			return wt, true
+		}
+	}
+	return Worktree{}, false
+}

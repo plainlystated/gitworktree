@@ -6,7 +6,9 @@ package gitdata
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -34,6 +36,21 @@ func (c CLIClient) IsMerged(worktree Worktree) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func (c CLIClient) DeleteWorktree(wt Worktree) error {
+	err := os.RemoveAll(wt.Path)
+	if err != nil {
+		return fmt.Errorf("deleting %s: %w", wt.Path, err)
+	}
+
+	cmd := exec.Command("git", "worktree", "prune")
+	cmd.Dir = filepath.Join(wt.Path, "..")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git prune: %w, %s", err, output)
+	}
+	return nil
 }
 
 func (c CLIClient) Worktrees() ([]Worktree, error) {
@@ -79,7 +96,6 @@ func (c CLIClient) Worktrees() ([]Worktree, error) {
 }
 
 func (c CLIClient) commitTime(commit CommitSHA) (time.Time, error) {
-	fmt.Println("Commit: ", commit)
 	cmd := exec.Command("git", "log", "-n", "1", "--format=%cd", "--date=iso-strict", string(commit))
 	cmd.Dir = c.Dir
 	output, err := cmd.CombinedOutput()

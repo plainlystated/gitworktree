@@ -11,9 +11,12 @@ import (
 )
 
 type app struct {
-	tview  *tview.Application
-	git    gitdata.Service
-	github githubdata.Service
+	tview        *tview.Application
+	git          gitdata.Service
+	github       githubdata.Service
+	grid         *tview.Grid
+	worktreeList *tview.Table
+	footer       *tview.TextView
 }
 
 func main() {
@@ -54,6 +57,18 @@ func tui() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
+	footer := tview.NewTextView().
+		SetTextAlign(tview.AlignCenter)
+
+	grid := tview.NewGrid().SetRows(3, 0, 3).
+		AddItem(tview.NewTextView().
+			SetTextAlign(tview.AlignCenter).
+			SetText("gitworktree"),
+			0, 0, 1, 1, 0, 0, false).
+		AddItem(footer,
+			2, 0, 1, 1, 0, 0, false)
+
 	app := app{
 		tview: tview.NewApplication(),
 		// gh:    gitdata.DefaultCLIClient(),
@@ -64,13 +79,16 @@ func tui() {
 				// Exec:       gitdata.LocalCLIExec{},
 			},
 		},
+		grid:   grid,
+		footer: footer,
 		github: githubService,
 	}
+	app.worktreeList = app.buildWorktreeList()
+	app.refreshWorktreeList()
 
-	worktreeList := app.worktreeList()
+	grid.AddItem(app.worktreeList, 1, 0, 1, 1, 0, 0, true)
 
-	// if err := app.SetRoot(box, true).Run(); err != nil {
-	if err := app.tview.SetRoot(worktreeList, true).Run(); err != nil {
+	if err := app.showGrid().Run(); err != nil {
 		panic(err)
 	}
 }

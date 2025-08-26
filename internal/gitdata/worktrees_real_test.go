@@ -36,8 +36,8 @@ func TestUnmockedClient(t *testing.T) {
 			branch string
 		}{
 			{name, gitdir, "master"},
-			{fmt.Sprintf("%s_wt1", name), fmt.Sprintf("%s_wt1", gitdir), "branch1"},
-			{fmt.Sprintf("%s_wt2", name), fmt.Sprintf("%s_wt2", gitdir), "branch2"},
+			{"wt1", fmt.Sprintf("%s/wt1", gitdir), "branch1"},
+			{"wt2", fmt.Sprintf("%s/wt2", gitdir), "branch2"},
 		} {
 			assertEqual(t, expected.name, worktrees[i].Name)
 			assertEqual(t, expected.path, worktrees[i].Path)
@@ -52,15 +52,41 @@ func TestUnmockedClient(t *testing.T) {
 		}
 	})
 
+	t.Run("DeleteWorktree", func(t *testing.T) {
+		worktrees, err := client.Worktrees()
+		assertNoErr(t, err)
+		assertEqual(t, len(worktrees), 3)
+
+		worktree := filepath.Join(gitdir, "deletable_wt")
+		runCmd(gitdir, "git", "worktree", "add", worktree, "-b", "deletable_wt_branch", "--quiet")
+		worktrees, err = client.Worktrees()
+		assertNoErr(t, err)
+		assertEqual(t, len(worktrees), 4)
+		assertIncludesWorktreeName(t, worktrees, "deletable_wt")
+
+		deletable, found := WorktreeByName(worktrees, "deletable_wt")
+		assertEqual(t, found, true)
+		err = client.DeleteWorktree(deletable)
+		assertNoErr(t, err)
+		worktrees, err = client.Worktrees()
+		assertNoErr(t, err)
+		assertEqual(t, len(worktrees), 3)
+		assertExcludesWorktreeName(t, worktrees, "deletable_wt")
+	})
+
 	t.Run("IsMerged", func(t *testing.T) {
 		worktrees, err := client.Worktrees()
 		assertNoErr(t, err)
 
 		// WT 1 is a fresh branch, so technically "merged"
-		assertMerged(t, client, worktrees[1])
+		wt1, found := WorktreeByName(worktrees, "wt1")
+		assertEqual(t, found, true)
+		assertMerged(t, client, wt1)
 
 		// WT 2 has an extra commit beyond master
-		assertNotMerged(t, client, worktrees[2])
+		wt2, found := WorktreeByName(worktrees, "wt2")
+		assertEqual(t, found, true)
+		assertNotMerged(t, client, wt2)
 	})
 }
 
@@ -75,7 +101,7 @@ func runCmd(dir string, name string, args ...string) {
 }
 
 func setupGit() (string, string) {
-	randomDir := fmt.Sprintf("repo_%d", rand.Intn(1000000))
+	randomDir := fmt.Sprintf("repo_%d.git", rand.Intn(1000000))
 	repoPath := filepath.Join(testRepoBaseDir, randomDir)
 
 	if err := os.MkdirAll(repoPath, 0755); err != nil {
@@ -87,8 +113,8 @@ func setupGit() (string, string) {
 
 	createDummyFile(repoPath, "README.md", true)
 
-	worktree1 := filepath.Join(repoPath, "..", randomDir+"_wt1")
-	worktree2 := filepath.Join(repoPath, "..", randomDir+"_wt2")
+	worktree1 := filepath.Join(repoPath, "wt1")
+	worktree2 := filepath.Join(repoPath, "wt2")
 	runCmd(repoPath, "git", "worktree", "add", worktree1, "-b", "branch1", "--quiet")
 	runCmd(repoPath, "git", "worktree", "add", worktree2, "-b", "branch2", "--quiet")
 
@@ -110,6 +136,7 @@ func createDummyFile(dir, filename string, commit bool) {
 }
 
 func cleanupGitRepo(dir string) {
+	fmt.Println("Cleaning up git dir")
 	if err := os.RemoveAll(dir); err != nil {
 		log.Printf("failed to delete repo: %v", err)
 	}

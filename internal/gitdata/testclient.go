@@ -43,6 +43,10 @@ func (c testClient) Worktrees() ([]Worktree, error) {
 	}, nil
 }
 
+func (c testClient) DeleteWorktree(wt Worktree) error {
+	return nil
+}
+
 // func (c testCLIExec) CommitSHA(commitish string) (CommitSHA, error) {
 // 	var sha CommitSHA
 // 	switch commitish {

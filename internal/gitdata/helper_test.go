@@ -1,6 +1,7 @@
 package gitdata
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -43,5 +44,26 @@ func assertNotMerged(t *testing.T, client Service, worktree Worktree) {
 	assertNoErr(t, err)
 	if merged {
 		t.Errorf("Expected worktree to be unmerged: %s", worktree.Name)
+	}
+}
+
+func assertIncludesWorktreeName(t *testing.T, worktrees []Worktree, exp string) {
+	t.Helper()
+	for _, wt := range worktrees {
+		if wt.Name == exp {
+			return
+		}
+		fmt.Println(wt.Name)
+	}
+	t.Errorf("Expected worktrees to include %s", exp)
+}
+
+func assertExcludesWorktreeName(t *testing.T, worktrees []Worktree, exp string) {
+	t.Helper()
+	for _, wt := range worktrees {
+		if wt.Name == exp {
+			t.Errorf("Expected worktrees to not include %s", exp)
+			return
+		}
 	}
 }
